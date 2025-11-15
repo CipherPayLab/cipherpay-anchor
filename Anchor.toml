@@ -3,7 +3,7 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
-cipherpay_anchor = "56nPWpjBLbh1n8vvUdCYGmg3dS5zNwLW9UhCg4MMpBmN"
+cipherpay_anchor = "BCrt2kn5HR4B7CHEMSBacekhzVTKYhzAQAB5YNkr5kJf"
 
 [idl]
 out = "target/idl"

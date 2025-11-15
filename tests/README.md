@@ -7,6 +7,7 @@ This directory contains a comprehensive test suite for the CipherPay Anchor prog
 step 1: start "solana-test-validator --reset"
 step 2: anchor build -- --features real-crypto
 step 3: anchor deploy
+#notice: program id is defined by target/deploy/cipherpay_anchor-keypair.json
 step 4:
 export CP_TREE_DEPTH=16
 export CP_HASH_VARIANT=poseidon
