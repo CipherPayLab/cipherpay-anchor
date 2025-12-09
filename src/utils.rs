@@ -103,17 +103,19 @@ fn parse_spl_token_amount(data: &[u8]) -> Option<(u8, u64, Option<u8>)> {
     }
 }
 
-/// Search 0..=current_index for a Transfer/TransferChecked to `expected_dst`.
+/// Search 0..=current_index for a Transfer/TransferChecked to `expected_dst` from `expected_src`.
 /// If `expected_amount == 0`, treat amount as a wildcard (useful in non-crypto builds).
+/// SECURITY: Verifies source, destination, AND amount to prevent deposit fraud.
 pub fn assert_transfer_checked_in_same_tx(
     instr_ai: &AccountInfo,
+    expected_src: &Pubkey,
     expected_dst: &Pubkey,
     expected_amount: u64,
 ) -> Result<()> {
     let cur = current_index(instr_ai)?;
     trace!(
-        "spl: want dst={} amount={} (wildcard_if_zero={})",
-        expected_dst, expected_amount, expected_amount == 0
+        "spl: want src={} dst={} amount={} (wildcard_if_zero={})",
+        expected_src, expected_dst, expected_amount, expected_amount == 0
     );
 
     for i in 0..=cur {
@@ -126,22 +128,28 @@ pub fn assert_transfer_checked_in_same_tx(
             match tag {
                 3 => {
                     // Transfer: [source, destination, authority, ...]
+                    let src = ix.accounts.get(0).map(|m| m.pubkey);
                     let dst = ix.accounts.get(1).map(|m| m.pubkey);
-                    let ok = if let Some(dst_pk) = dst {
+                    let ok = if let (Some(src_pk), Some(dst_pk)) = (src, dst) {
                         let amount_ok = expected_amount == 0 || amount == expected_amount;
-                        dst_pk == *expected_dst && amount_ok
+                        let src_ok = src_pk == *expected_src;
+                        let dst_ok = dst_pk == *expected_dst;
+                        src_ok && dst_ok && amount_ok
                     } else { false };
-                    trace!("spl@{i}: Transfer amount={amount} dst={:?} ok={}", dst, ok);
+                    trace!("spl@{i}: Transfer amount={amount} src={:?} dst={:?} ok={}", src, dst, ok);
                     if ok { return Ok(()); }
                 }
                 12 => {
                     // TransferChecked: [source, mint, destination, authority, ...]
+                    let src = ix.accounts.get(0).map(|m| m.pubkey);
                     let dst = ix.accounts.get(2).map(|m| m.pubkey);
-                    let ok = if let Some(dst_pk) = dst {
+                    let ok = if let (Some(src_pk), Some(dst_pk)) = (src, dst) {
                         let amount_ok = expected_amount == 0 || amount == expected_amount;
-                        dst_pk == *expected_dst && amount_ok
+                        let src_ok = src_pk == *expected_src;
+                        let dst_ok = dst_pk == *expected_dst;
+                        src_ok && dst_ok && amount_ok
                     } else { false };
-                    trace!("spl@{i}: TransferChecked amount={amount} dec={:?} dst={:?} ok={}", decimals, dst, ok);
+                    trace!("spl@{i}: TransferChecked amount={amount} dec={:?} src={:?} dst={:?} ok={}", decimals, src, dst, ok);
                     if ok { return Ok(()); }
                 }
                 _ => {

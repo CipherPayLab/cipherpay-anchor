@@ -84,6 +84,12 @@ pub struct ShieldedDepositAtomic<'info> {
     #[account(mut)]
     pub vault_token_account: UncheckedAccount<'info>,
 
+    /// User's token account (source of the transfer)
+    /// SECURITY: Verifies user transferred tokens from their ATA
+    /// CHECK: User's ATA, verified in instruction logic
+    #[account(mut)]
+    pub user_token_account: UncheckedAccount<'info>,
+
     /// CHECK: SPL mint
     pub token_mint: UncheckedAccount<'info>,
 

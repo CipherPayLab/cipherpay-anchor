@@ -276,6 +276,7 @@ describe("shielded_deposit_atomic (end-to-end) — assumes PDAs pre-initialized"
         depositMarker: depositMarkerPda,
         vaultPda,
         vaultTokenAccount: vaultAta,
+        userTokenAccount: payerAta, // SECURITY FIX: User's token account (source of transfer)
         tokenMint,
         instructions: web3.SYSVAR_INSTRUCTIONS_PUBKEY,
         systemProgram: web3.SystemProgram.programId,

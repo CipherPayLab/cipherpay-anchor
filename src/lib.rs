@@ -166,12 +166,14 @@ pub mod cipherpay_anchor {
             let mut amount_u64: u64 = 0;
             for i in 0..8 { amount_u64 |= (amount_fe[i] as u64) << (8*i); }
 
-            // Atomicity with the SPL tx in the same transaction
+            // SECURITY: Atomicity with the SPL tx in the same transaction
+            // Verify that the user actually transferred the tokens from their ATA to the vault
             assert_memo_in_same_tx(&ctx.accounts.instructions, &deposit_hash32)?;
             assert_transfer_checked_in_same_tx(
                 &ctx.accounts.instructions,
-                &ctx.accounts.vault_token_account.key(),
-                amount_u64,
+                &ctx.accounts.user_token_account.key(), // Source: user's ATA
+                &ctx.accounts.vault_token_account.key(), // Destination: vault ATA
+                amount_u64, // Must match exactly
             )?;
 
             // Single-history checks
@@ -205,7 +207,8 @@ pub mod cipherpay_anchor {
             assert_memo_in_same_tx(&ctx.accounts.instructions, &deposit_hash32)?;
             assert_transfer_checked_in_same_tx(
                 &ctx.accounts.instructions,
-                &ctx.accounts.vault_token_account.key(),
+                &ctx.accounts.user_token_account.key(), // Source: user's ATA
+                &ctx.accounts.vault_token_account.key(), // Destination: vault ATA
                 0,
             )?;
 
