@@ -23,16 +23,54 @@ impl DepositMarker {
     }
 }
 
-/// Optional on-chain nullifier record (if you decide to persist spent notes).
+/// On-chain nullifier record with audit trail.
+/// Stores merkle root and timing information for permanent verification,
+/// eliminating dependency on transaction logs which get pruned.
+/// 
+/// Privacy: Commitments are NOT stored to preserve transaction privacy.
+/// Only merkle roots (which don't reveal individual commitments) are stored.
 #[account]
 pub struct NullifierRecord {
+    /// Whether this nullifier has been consumed (spent).
     pub used: bool,
+
+    /// PDA bump.
     pub bump: u8,
+
+    /// Slot when this nullifier was first marked spent.
+    pub spent_slot: u64,
+
+    /// Unix timestamp (seconds) when this nullifier was marked spent.
+    /// Sourced from the Clock sysvar.
+    pub spent_unix_ts: i64,
+
+    /// === Audit Trail Fields (for permanent on-chain verification) ===
+    
+    /// Merkle root that was proven in the ZK proof (before transaction)
+    /// This is the "old root" from the circuit - proves the spent note existed
+    pub merkle_root_before: [u8; 32],
+    
+    /// Final merkle root after all insertions (after transaction)
+    /// For transfer: root after both out1 and out2 insertions
+    /// For withdraw: same as merkle_root_before (no new commitments)
+    pub merkle_root_after: [u8; 32],
+    
+    /// Event type: 0=unknown, 1=transfer, 2=withdraw
+    /// Helps auditors distinguish between transaction types
+    pub event_type: u8,
 }
+
 impl NullifierRecord {
-    pub const SIZE: usize = 1 + 1;
+    // Field sizes:
+    // Basic: bool:1 + u8:1 + u64:8 + i64:8 = 18 bytes
+    // Audit trail: [u8;32]*2 (two roots) + u8 (event_type) = 65 bytes
+    // Total: 18 + 65 = 83 bytes
+    pub const SIZE: usize = 1 + 1 + 8 + 8 + (32 * 2) + 1;
+
+    // Anchor discriminator (8) + fields = 91 bytes total
     pub const SPACE: usize = 8 + Self::SIZE;
 }
+
 
 #[account]
 pub struct TreeState {
