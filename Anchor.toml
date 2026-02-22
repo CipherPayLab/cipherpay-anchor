@@ -5,6 +5,9 @@ skip-lint = false
 [programs.localnet]
 cipherpay_anchor = "24gZSJMyGiAbaTcBEm9WZyfq9TvkJJDQWake7uNHvPKj"
 
+[programs.devnet]
+cipherpay_anchor = "24gZSJMyGiAbaTcBEm9WZyfq9TvkJJDQWake7uNHvPKj"
+
 [idl]
 out = "target/idl"
 
@@ -14,9 +17,14 @@ out = "target/types"
 [registry]
 url = "https://api.apr.dev"
 
+# For localnet: uncomment the block below and comment out the [provider] block after it.
+#[provider]
+#cluster = "localnet"
+#wallet = "~/.config/solana/id.json"
+
 [provider]
-cluster = "localnet"
-wallet = "~/.config/solana/id.json"
+cluster = "devnet"
+wallet = "~/.config/solana/devnet-deployer.json"
 
 [scripts]
 # test = "anchor test"
