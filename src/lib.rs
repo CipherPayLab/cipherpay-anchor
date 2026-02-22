@@ -26,7 +26,7 @@ use crate::utils::{
 #[cfg(feature = "real-crypto")]
 use crate::zk_verifier::solana_verifier;
 
-declare_id!("BCrt2kn5HR4B7CHEMSBacekhzVTKYhzAQAB5YNkr5kJf");
+declare_id!("24gZSJMyGiAbaTcBEm9WZyfq9TvkJJDQWake7uNHvPKj");
 
 pub mod constants;
 pub mod context;
@@ -166,12 +166,14 @@ pub mod cipherpay_anchor {
             let mut amount_u64: u64 = 0;
             for i in 0..8 { amount_u64 |= (amount_fe[i] as u64) << (8*i); }
 
-            // Atomicity with the SPL tx in the same transaction
+            // SECURITY: Atomicity with the SPL tx in the same transaction
+            // Verify that the user actually transferred the tokens from their ATA to the vault
             assert_memo_in_same_tx(&ctx.accounts.instructions, &deposit_hash32)?;
             assert_transfer_checked_in_same_tx(
                 &ctx.accounts.instructions,
-                &ctx.accounts.vault_token_account.key(),
-                amount_u64,
+                &ctx.accounts.user_token_account.key(), // Source: user's ATA
+                &ctx.accounts.vault_token_account.key(), // Destination: vault ATA
+                amount_u64, // Must match exactly
             )?;
 
             // Single-history checks
@@ -205,7 +207,8 @@ pub mod cipherpay_anchor {
             assert_memo_in_same_tx(&ctx.accounts.instructions, &deposit_hash32)?;
             assert_transfer_checked_in_same_tx(
                 &ctx.accounts.instructions,
-                &ctx.accounts.vault_token_account.key(),
+                &ctx.accounts.user_token_account.key(), // Source: user's ATA
+                &ctx.accounts.vault_token_account.key(), // Destination: vault ATA
                 0,
             )?;
 
@@ -238,12 +241,6 @@ pub mod cipherpay_anchor {
         let mut nf32 = [0u8; 32];
         nf32.copy_from_slice(&nullifier);
     
-        // --- idempotency: nullifier record ---
-        let rec = &mut ctx.accounts.nullifier_record;
-        require!(!rec.used, CipherPayError::AlreadyProcessed);
-        rec.used = true;
-        rec.bump = ctx.bumps.nullifier_record;   // ← keep only fields that exist
-    
         // --- verify + parse public signals ---
         #[cfg(feature = "real-crypto")]
         {
@@ -261,8 +258,24 @@ pub mod cipherpay_anchor {
         let new_root2        = sigs[transfer_idx::NEW_MERKLE_ROOT_2];
         let next_leaf_index  = sigs[transfer_idx::NEW_NEXT_LEAF_INDEX];
     
-        // ensure nullifier in proof == instruction arg
+        // SECURITY: Ensure nullifier in proof matches instruction arg BEFORE checking if it's used
+        // This prevents checking/marking the wrong nullifier if they don't match
         require!(nf == nf32, CipherPayError::InvalidZkProof);
+    
+    // --- idempotency: nullifier record (check AFTER verifying proof nullifier matches) ---
+    let rec = &mut ctx.accounts.nullifier_record;
+    require!(!rec.used, CipherPayError::AlreadyProcessed);
+    let clock = Clock::get()?;
+    rec.used = true;
+    rec.bump = ctx.bumps.nullifier_record;
+    rec.spent_slot = clock.slot;
+    rec.spent_unix_ts = clock.unix_timestamp;
+    
+    // --- Audit trail: Store merkle root data for permanent verification ---
+    // Note: Commitments are NOT stored to preserve privacy
+    rec.merkle_root_before = old_root;
+    rec.merkle_root_after = new_root2;  // Final root after both insertions
+    rec.event_type = 1;  // 1 = transfer
     
         // --- strict sync with on-chain tree history ---
         let tree = &mut ctx.accounts.tree;
@@ -350,7 +363,8 @@ pub mod cipherpay_anchor {
             .try_into()
             .map_err(|_| error!(CipherPayError::InvalidPublicInputsLength))?;
     
-        // Caller-provided nullifier must equal public input nullifier
+        // SECURITY: Ensure nullifier in proof matches instruction arg BEFORE any state checks
+        // This prevents checking/marking the wrong nullifier if they don't match
         require!(nullifier.as_slice() == &nf32[..], CipherPayError::NullifierMismatch);
     
         // Parse u64 amount from first 8 bytes (little-endian) of the 32-byte field element
@@ -361,10 +375,6 @@ pub mod cipherpay_anchor {
         };
     
         // -------------------- 1) Cheap state checks (before verifier) --------------------
-        // Nullifier must not be used yet (idempotency)
-        let rec = &mut ctx.accounts.nullifier_record;
-        require!(!rec.used, CipherPayError::AlreadyProcessed);
-    
         // Root must be in cache (prevents verifier work if invalid)
         require!(
             is_valid_root(root32, &ctx.accounts.root_cache),
@@ -403,7 +413,7 @@ pub mod cipherpay_anchor {
             CipherPayError::InvalidInput
         );
     
-        // -------------------- 2) Proof verification (after cheap guards) --------------------
+        // -------------------- 2) Proof verification (before nullifier record check) --------------------
         #[cfg(feature = "real-crypto")]
         {
             // Verify Groth16 proof; use bounded parsing internally
@@ -437,6 +447,12 @@ pub mod cipherpay_anchor {
             );
         }
     
+        // -------------------- 3) Nullifier record check (AFTER proof verification) --------------------
+        // SECURITY: Check if nullifier is already used only after verifying the proof
+        // This ensures we're checking the nullifier that was actually proven in the ZK proof
+        let rec = &mut ctx.accounts.nullifier_record;
+        require!(!rec.used, CipherPayError::AlreadyProcessed);
+    
         #[cfg(not(feature = "real-crypto"))]
         {
             // Stub build: no zk verification, we already parsed/publicly checked values above.
@@ -465,11 +481,20 @@ pub mod cipherpay_anchor {
                 .map_err(|_| error!(CipherPayError::TokenTransferFailed))?;
         }
     
-        // -------------------- 4) Mark nullifier as used (only after success) --------------------
-        rec.used = true;
-        rec.bump = ctx.bumps.nullifier_record;
+    // -------------------- 4) Mark nullifier as used (only after all checks pass) --------------------
+    rec.used = true;
+    rec.bump = ctx.bumps.nullifier_record;
+    let clock = Clock::get()?;
+    rec.spent_slot = clock.slot;
+    rec.spent_unix_ts = clock.unix_timestamp;
     
-        // -------------------- 5) Emit event --------------------
+    // --- Audit trail: Store merkle root for permanent verification ---
+    // For withdraw, no new commitments are created (user exits to Solana)
+    rec.merkle_root_before = *root32;
+    rec.merkle_root_after = *root32;  // No change in tree for withdraw
+    rec.event_type = 2;  // 2 = withdraw
+
+    // -------------------- 5) Emit event --------------------
         emit!(WithdrawCompleted {
             nullifier: *nf32,
             merkle_root_used: *root32,

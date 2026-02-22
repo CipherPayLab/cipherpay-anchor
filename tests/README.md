@@ -4,8 +4,16 @@ This directory contains a comprehensive test suite for the CipherPay Anchor prog
 
 # Usage
 ### test procedures on localnet
+step 0: anchor clean
+         rm -rf target/
+         rm -rf .anchor/
+         rm -rf ~/test-ledger
 step 1: start "solana-test-validator --reset"
 step 2: anchor build -- --features real-crypto
+cp /home/sean/cipherpaylab/cipherpay-anchor/target/idl/cipherpay_anchor.json \
+   /home/sean/cipherpaylab/cipherpay-relayer-solana/src/idl/cipherpay_anchor.json
+cp /home/sean/cipherpaylab/cipherpay-anchor/target/idl/cipherpay_anchor.json \
+   /home/sean/cipherpaylab/cipherpay-zkaudit/packages/zkaudit-server/assets/idl/cipherpay_anchor.json
 step 3: anchor deploy
 #notice: program id is defined by target/deploy/cipherpay_anchor-keypair.json
 step 4:
