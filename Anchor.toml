@@ -17,14 +17,11 @@ out = "target/types"
 [registry]
 url = "https://api.apr.dev"
 
-# For localnet: uncomment the block below and comment out the [provider] block after it.
-#[provider]
-#cluster = "localnet"
-#wallet = "~/.config/solana/id.json"
-
+# Default for `anchor deploy` (no override). Prefer `npm run deploy:local` or
+# `npm run deploy:devnet` to avoid accidental deploys to the wrong cluster.
 [provider]
-cluster = "devnet"
-wallet = "~/.config/solana/devnet-deployer.json"
+cluster = "localnet"
+wallet = "~/.config/solana/id.json"
 
 [scripts]
 # test = "anchor test"
