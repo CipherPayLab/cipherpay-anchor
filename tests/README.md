@@ -5,7 +5,7 @@ This directory contains a comprehensive test suite for the CipherPay Anchor prog
 # Usage
 ### test procedures on localnet
 step 0: anchor clean
-         rm -rf target/
+         rm -rf target/ #notice keypair will be deleted as well
          rm -rf .anchor/
          rm -rf ~/test-ledger
 step 1: start "solana-test-validator --reset"
@@ -14,16 +14,25 @@ cp /home/sean/cipherpaylab/cipherpay-anchor/target/idl/cipherpay_anchor.json \
    /home/sean/cipherpaylab/cipherpay-relayer-solana/src/idl/cipherpay_anchor.json
 cp /home/sean/cipherpaylab/cipherpay-anchor/target/idl/cipherpay_anchor.json \
    /home/sean/cipherpaylab/cipherpay-zkaudit/packages/zkaudit-server/assets/idl/cipherpay_anchor.json
-step 3: anchor deploy
-#notice: program id is defined by target/deploy/cipherpay_anchor-keypair.json
+step 3: npm run deploy:local   # or: anchor deploy --provider.cluster localnet
+or
+npm run deploy:devnet
+# Use deploy:local for localnet; deploy:devnet for devnet. Avoid plain "anchor deploy"
+# which uses Anchor.toml [provider] default.
+# Program id is defined by target/deploy/cipherpay_anchor-keypair.json
 step 4:
 export CP_TREE_DEPTH=16
 export CP_HASH_VARIANT=poseidon
 export CP_GENESIS_ROOT=0x2a7c7c9b6ce5880b9f6f228d72bf6a575a526f29c66ecceef8b753d38bba7323
 
-ANCHOR_PROVIDER_URL=http://127.0.0.1:8899 \
-ANCHOR_WALLET=~/.config/solana/id.json \
-anchor run init
+npm run init:local   # or: ANCHOR_PROVIDER_URL=http://127.0.0.1:8899 ANCHOR_WALLET=~/.config/solana/id.json 
+or 
+npm run init:devnet
+
+
+# verify program
+solana program show 24gZSJMyGiAbaTcBEm9WZyfq9TvkJJDQWake7uNHvPKj --url http://127.0.0.1:8899
+
 step 5: 
 ### deposit/deposit1/deposit2/deposit3
 DEPOSIT_VARIANT=deposit npm run test:deposit
