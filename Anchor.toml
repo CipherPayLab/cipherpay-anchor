@@ -3,10 +3,10 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
-cipherpay_anchor = "24gZSJMyGiAbaTcBEm9WZyfq9TvkJJDQWake7uNHvPKj"
+cipherpay_anchor = "WRy4hstBsD6hxb7CJN4R3fgLnafs621N7EjUhZ2afze"
 
 [programs.devnet]
-cipherpay_anchor = "24gZSJMyGiAbaTcBEm9WZyfq9TvkJJDQWake7uNHvPKj"
+cipherpay_anchor = "WRy4hstBsD6hxb7CJN4R3fgLnafs621N7EjUhZ2afze"
 
 [idl]
 out = "target/idl"

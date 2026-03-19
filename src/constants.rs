@@ -7,7 +7,7 @@ use anchor_lang::pubkey;            // brings the `pubkey!` macro into scope
 // PDA seeds (yours, kept)
 // =======================
 
-pub const PROGRAM_ADMIN: Pubkey = pubkey!("24gZSJMyGiAbaTcBEm9WZyfq9TvkJJDQWake7uNHvPKj");
+pub const PROGRAM_ADMIN: Pubkey = pubkey!("WRy4hstBsD6hxb7CJN4R3fgLnafs621N7EjUhZ2afze");
 
 /// Deposit marker PDA: seeds = [b"deposit", deposit_hash]
 pub const DEPOSIT_MARKER_SEED: &[u8] = b"deposit";
