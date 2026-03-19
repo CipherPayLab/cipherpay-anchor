@@ -5,15 +5,13 @@ This directory contains a comprehensive test suite for the CipherPay Anchor prog
 # Usage
 ### test procedures on localnet
 step 0: anchor clean
-         rm -rf target/ #notice keypair will be deleted as well
+         rm -rf target/ #notice keypair will be deleted as well - ALERT
          rm -rf .anchor/
          rm -rf ~/test-ledger
 step 1: start "solana-test-validator --reset"
 step 2: anchor build -- --features real-crypto
 cp /home/sean/cipherpaylab/cipherpay-anchor/target/idl/cipherpay_anchor.json \
    /home/sean/cipherpaylab/cipherpay-relayer-solana/src/idl/cipherpay_anchor.json
-cp /home/sean/cipherpaylab/cipherpay-anchor/target/idl/cipherpay_anchor.json \
-   /home/sean/cipherpaylab/cipherpay-zkaudit/packages/zkaudit-server/assets/idl/cipherpay_anchor.json
 step 3: npm run deploy:local   # or: anchor deploy --provider.cluster localnet
 or
 npm run deploy:devnet
@@ -31,7 +29,7 @@ npm run init:devnet
 
 
 # verify program
-solana program show 24gZSJMyGiAbaTcBEm9WZyfq9TvkJJDQWake7uNHvPKj --url http://127.0.0.1:8899
+solana program show WRy4hstBsD6hxb7CJN4R3fgLnafs621N7EjUhZ2afze --url http://127.0.0.1:8899
 
 step 5: 
 ### deposit/deposit1/deposit2/deposit3
