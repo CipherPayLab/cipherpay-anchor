@@ -23,13 +23,15 @@ export CP_TREE_DEPTH=16
 export CP_HASH_VARIANT=poseidon
 export CP_GENESIS_ROOT=0x2a7c7c9b6ce5880b9f6f228d72bf6a575a526f29c66ecceef8b753d38bba7323
 
-npm run init:local   # or: ANCHOR_PROVIDER_URL=http://127.0.0.1:8899 ANCHOR_WALLET=~/.config/solana/id.json 
-or 
-npm run init:devnet
+npm run init:local   # uses localnet + ~/.config/solana/id.json (needs solana-test-validator on :8899)
+or
+npm run init:devnet  # uses devnet + ~/.config/solana/devnet-deployer.json (program must be deployed on devnet first; wallet needs devnet SOL)
 
 
 # verify program
 solana program show WRy4hstBsD6hxb7CJN4R3fgLnafs621N7EjUhZ2afze --url http://127.0.0.1:8899
+
+solana program show WRy4hstBsD6hxb7CJN4R3fgLnafs621N7EjUhZ2afze --url https://api.devnet.solana.com
 
 step 5: 
 ### deposit/deposit1/deposit2/deposit3
