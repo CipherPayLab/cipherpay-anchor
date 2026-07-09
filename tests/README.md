@@ -3,38 +3,48 @@
 This directory contains a comprehensive test suite for the CipherPay Anchor program, including unit tests, integration tests, and performance benchmarks.
 
 # Usage
+
 ### test procedures on localnet
+
 step 0: anchor clean
-         rm -rf target/ #notice keypair will be deleted as well - ALERT
-         rm -rf .anchor/
-         rm -rf ~/test-ledger
+rm -rf target/ #notice keypair will be deleted as well - ALERT
+rm -rf .anchor/
+rm -rf ~/test-ledger
 step 1: start "solana-test-validator --reset"
 step 2: anchor build -- --features real-crypto
 cp /home/sean/cipherpaylab/cipherpay-anchor/target/idl/cipherpay_anchor.json \
-   /home/sean/cipherpaylab/cipherpay-relayer-solana/src/idl/cipherpay_anchor.json
-step 3: npm run deploy:local   # or: anchor deploy --provider.cluster localnet
+ /home/sean/cipherpaylab/cipherpay-relayer-solana/src/idl/cipherpay_anchor.json
+cp /home/sean/cipherpaylab/cipherpay-anchor/target/idl/cipherpay_anchor.json \
+ /home/sean/cipherpaylab/cipherpay-app/packages/server/idl/cipherpay_anchor.json
+step 3: npm run deploy:local # or: anchor deploy --provider.cluster localnet
 or
 npm run deploy:devnet
+
 # Use deploy:local for localnet; deploy:devnet for devnet. Avoid plain "anchor deploy"
+
 # which uses Anchor.toml [provider] default.
+
 # Program id is defined by target/deploy/cipherpay_anchor-keypair.json
+
 step 4:
 export CP_TREE_DEPTH=16
 export CP_HASH_VARIANT=poseidon
 export CP_GENESIS_ROOT=0x2a7c7c9b6ce5880b9f6f228d72bf6a575a526f29c66ecceef8b753d38bba7323
 
-npm run init:local   # uses localnet + ~/.config/solana/id.json (needs solana-test-validator on :8899)
+npm run init:local # uses localnet + ~/.config/solana/id.json (needs solana-test-validator on :8899)
 or
-npm run init:devnet  # uses devnet + ~/.config/solana/devnet-deployer.json (program must be deployed on devnet first; wallet needs devnet SOL)
-
+npm run init:devnet # uses devnet + ~/.config/solana/devnet-deployer.json (program must be deployed on devnet first; wallet needs devnet SOL)
 
 # verify program
-solana program show WRy4hstBsD6hxb7CJN4R3fgLnafs621N7EjUhZ2afze --url http://127.0.0.1:8899
 
-solana program show WRy4hstBsD6hxb7CJN4R3fgLnafs621N7EjUhZ2afze --url https://api.devnet.solana.com
+solana program show AWVNBHaF1upXopq9dQpRpY54c9113bBskqiv16MUTDDd --url http://127.0.0.1:8899
 
-step 5: 
+solana program show AWVNBHaF1upXopq9dQpRpY54c9113bBskqiv16MUTDDd --url https://api.devnet.solana.com
+
+step 5:
+
 ### deposit/deposit1/deposit2/deposit3
+
 DEPOSIT_VARIANT=deposit npm run test:deposit
 
 TRANSFER_VARIANT=transfer npm run test:transfer
@@ -74,12 +84,14 @@ WITHDRAW_VARIANT=withdraw3 npm run test:withdraw
 ### Test Categories
 
 #### 1. Unit Tests
+
 - State management (DepositMarker, Nullifier, MerkleRootCache)
 - Utility functions (as_fixed_32, is_valid_root, etc.)
 - Constants validation
 - Error type completeness
 
 #### 2. Integration Tests
+
 - Complete deposit flow with atomicity validation
 - Complete transfer flow with nullifier tracking
 - Complete withdraw flow with SPL token transfers
@@ -87,18 +99,21 @@ WITHDRAW_VARIANT=withdraw3 npm run test:withdraw
 - Duplicate prevention mechanisms
 
 #### 3. ZK Verifier Tests
+
 - Proof parsing and validation
 - Public signal extraction
 - Verifying key deserialization
 - Circuit-specific verification functions
 
 #### 4. Error Tests
+
 - Transaction validation failures
 - Duplicate prevention
 - Invalid input handling
 - Edge case scenarios
 
 #### 5. Performance Tests
+
 - Merkle root cache operations
 - Field element conversions
 - Proof verification benchmarks
@@ -106,11 +121,13 @@ WITHDRAW_VARIANT=withdraw3 npm run test:withdraw
 ## Running Tests
 
 ### Run All Tests
+
 ```bash
 cargo test
 ```
 
 ### Run Specific Test Categories
+
 ```bash
 # Unit tests only
 cargo test unit_tests
@@ -129,16 +146,19 @@ cargo test comprehensive_tests
 ```
 
 ### Run Tests with Logging
+
 ```bash
 RUST_LOG=debug cargo test
 ```
 
 ### Run Tests with Backtrace
+
 ```bash
 RUST_BACKTRACE=1 cargo test
 ```
 
 ### Run Tests in Release Mode
+
 ```bash
 cargo test --release
 ```
@@ -146,16 +166,19 @@ cargo test --release
 ## Test Configuration
 
 ### Environment Variables
+
 - `RUST_LOG` - Set logging level (default: info)
 - `RUST_BACKTRACE` - Enable backtrace (default: 0)
 
 ### Test Features
+
 - `real-crypto` - Enable real cryptographic operations
 - `memo` - Enable SPL Memo program integration
 
 ## Test Helpers
 
 ### Mock Data Generators
+
 ```rust
 use cipherpay_anchor::tests::mock_data;
 
@@ -168,6 +191,7 @@ let amount = mock_data::generate_amount();
 ```
 
 ### Test Scenarios
+
 ```rust
 use cipherpay_anchor::tests::scenarios;
 
@@ -178,6 +202,7 @@ let withdraw_scenario = scenarios::WithdrawScenario::new();
 ```
 
 ### Test Assertions
+
 ```rust
 use cipherpay_anchor::tests::assertions;
 
@@ -208,17 +233,20 @@ The test suite covers:
 ## Test Data
 
 ### Mock Proofs
+
 - Valid proof structures (256 bytes)
 - Invalid proof lengths
 - Malformed proof data
 
 ### Mock Public Signals
+
 - Deposit signals (6 fields)
 - Transfer signals (9 fields)
 - Withdraw signals (5 fields)
 - Invalid signal counts
 
 ### Mock Accounts
+
 - Deposit markers
 - Nullifier records
 - Merkle root caches
@@ -236,6 +264,7 @@ The test suite includes performance benchmarks for:
 ## Debugging Tests
 
 ### Enable Debug Logging
+
 ```rust
 use cipherpay_anchor::tests::test_logging;
 
@@ -248,6 +277,7 @@ async fn my_test() {
 ```
 
 ### Performance Monitoring
+
 ```rust
 use cipherpay_anchor::tests::test_performance;
 
@@ -262,6 +292,7 @@ fn my_benchmark() {
 ## Test Utilities
 
 ### Common Test Functions
+
 ```rust
 use cipherpay_anchor::tests::utils;
 
@@ -281,6 +312,7 @@ let result = utils::execute_transaction(&mut banks_client, transaction).await;
 ```
 
 ### Test Constants
+
 ```rust
 use cipherpay_anchor::tests::test_constants;
 
@@ -332,4 +364,3 @@ RUST_BACKTRACE=1 cargo test
 # Run tests in single thread
 cargo test -- --test-threads=1
 ```
-

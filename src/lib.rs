@@ -26,7 +26,7 @@ use crate::utils::{
 #[cfg(feature = "real-crypto")]
 use crate::zk_verifier::solana_verifier;
 
-declare_id!("WRy4hstBsD6hxb7CJN4R3fgLnafs621N7EjUhZ2afze");
+declare_id!("AWVNBHaF1upXopq9dQpRpY54c9113bBskqiv16MUTDDd");
 
 pub mod constants;
 pub mod context;
